@@ -1,0 +1,37 @@
+<?php
+
+use Drupal\Core\Field\BaseFieldDefinition;
+
+function radicati_sitenotice_install() {
+
+  $field_storage_num_days = BaseFieldDefinition::create('integer')
+    ->setLabel(t('Number of Days'))
+    ->setDescription(t('The number of days out the cookie should be set to.'))
+    ->setRevisionable(TRUE)
+    ->setTranslatable(FALSE)
+    ->setDefaultValue(14)
+    ->setReadOnly(FALSE);
+
+  $field_storage_enabled = BaseFieldDefinition::create('boolean')
+    ->setLabel(t('Site Notice Enabled'))
+    ->setDescription(t('Whether site notice is enabled on this block.'))
+    ->setRevisionable(TRUE)
+    ->setTranslatable(FALSE)
+    ->setDefaultValue(FALSE)
+    ->setReadOnly(FALSE);
+
+  $field_storage_type = BaseFieldDefinition::create('string')
+    ->setLabel(t('Site Notice Cookie Type'))
+    ->setDescription(t('Whether the cookie has a set end date or is a session cookie.'))
+    ->setRevisionable(TRUE)
+    ->setTranslatable(FALSE)
+    ->setDefaultValue('expiration_num_days')
+    ->setReadOnly(FALSE);
+
+  \Drupal::entityDefinitionUpdateManager()->installFieldStorageDefinition('sitenotice_num_days', 'block_content',
+    'block_content', $field_storage_num_days);
+  \Drupal::entityDefinitionUpdateManager()->installFieldStorageDefinition('sitenotice_enabled', 'block_content',
+    'block_content', $field_storage_enabled);
+  \Drupal::entityDefinitionUpdateManager()->installFieldStorageDefinition('sitenotice_cookie_type', 'block_content',
+    'block_content', $field_storage_type);
+}

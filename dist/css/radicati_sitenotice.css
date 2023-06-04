@@ -1,0 +1,16 @@
+.site-notice__block {
+  display: none;
+  position: relative;
+}
+
+.sitenotice__close__wrapper {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+}
+
+.sitenotice__close__button {
+  background: transparent;
+  font-size: 3rem;
+  border: 0;
+}

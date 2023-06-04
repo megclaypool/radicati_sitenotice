@@ -1,0 +1,189 @@
+<?php
+
+/**
+ * @file
+ * Contains stickyfooter.module.
+ */
+
+use Drupal\block_content\Entity\BlockContent;
+use Drupal\Core\Block\BlockPluginInterface;
+use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Routing\RouteMatchInterface;
+
+
+/**
+ * Implements hook_entity_base_field_info().
+ */
+function radicati_sitenotice_entity_base_field_info(\Drupal\Core\Entity\EntityTypeInterface $entity_type) {
+  if($entity_type->id() == 'block_content') {
+    $fields['sitenotice_num_days'] = BaseFieldDefinition::create('integer')
+      ->setLabel(t('Number of Days'))
+      ->setDescription(t('The number of days out the cookie should be set to.'))
+      ->setRevisionable(TRUE)
+      ->setTranslatable(FALSE)
+      ->setDefaultValue(14)
+      ->setReadOnly(FALSE);
+
+    $fields['sitenotice_enabled'] = BaseFieldDefinition::create('boolean')
+      ->setLabel(t('Site Notice Enabled'))
+      ->setDescription(t('Whether site notice is enabled on this block.'))
+      ->setRevisionable(TRUE)
+      ->setTranslatable(FALSE)
+      ->setDefaultValue(FALSE)
+      ->setReadOnly(FALSE);
+
+    $fields['sitenotice_cookie_type'] = BaseFieldDefinition::create('string')
+      ->setLabel(t('Site Notice Cookie Type'))
+      ->setDescription(t('Whether the cookie has a set end date or is a session cookie.'))
+      ->setRevisionable(TRUE)
+      ->setTranslatable(FALSE)
+      ->setDefaultValue('expiration_num_days')
+      ->setReadOnly(FALSE);
+
+
+    return $fields;
+  }
+}
+
+/**
+ * Implements hook_theme().
+ */
+/**
+ * Implements hook_theme().
+ */
+function radicati_sitenotice_theme($existing, $type, $theme, $path) {
+  return [
+    'sitenotice_close' => [
+      'render element' => 'children',
+    ],
+  ];
+}
+
+function radicati_sitenotice_form_alter(&$form, FormStateInterface $form_state) {
+  $block_edit_ids = [];
+
+  // Performs an entity query to get all block types that have site_notice enabled.
+  $query = \Drupal::entityQuery('block_content_type')
+    ->condition('third_party_settings.radicat_sitenotice.rsn_enabled', TRUE, '=');
+  $ids = $query->execute();
+
+  // For each id add the add and edit form ids to the array.
+  foreach($ids as $id) {
+    $block_edit_ids[] = "block_content_{$id}_edit_form";
+    $block_edit_ids[] = "block_content_{$id}_add_form";
+  }
+
+
+
+  if($form['#form_id'] == 'block_content_type_edit_form' || $form['#form_id'] == 'block_content_type_add_form') {
+    $entity = $form_state->getFormObject()->getEntity();
+    $setting_site_notice_enabled = $entity->getThirdPartySetting('radicat_sitenotice', 'rsn_enabled');
+
+    $form['site_notice'] = [
+      '#type' => 'checkbox',
+      '#title' => t('Enable Site Notice settings.'),
+      '#description' => t('If enabled this will add Cookie control fields to the edit form.'),
+      '#default_value' => $setting_site_notice_enabled
+    ];
+    $form['#entity_builders'][] = 'rsn_block_content_type_edit_form_builder';
+  } elseif(in_array($form['#form_id'], $block_edit_ids)) {
+
+    $entity = $form_state->getFormObject()->getEntity();
+
+    $num_days = $entity->get('sitenotice_num_days')->getValue()[0] ?? 12;
+    $enabled = $entity->get('sitenotice_enabled')->getValue()[0]['value'] ?? FALSE;
+    $cookie_type = $entity->get('sitenotice_cookie_type')->getValue()[0] ?? 'expiration_num_days';
+
+    $form['site_notice'] = [
+      '#type' => 'details',
+      '#title' => t('Site Notice Settings'),
+      '#open' => TRUE,
+      '#group' => 'advanced'
+    ];
+
+    $form['revision_information']['#open'] = FALSE;
+
+    $form['site_notice']['sitenotice_enabled'] = [
+      '#type' => 'checkbox',
+      '#title' => t('Enabled'),
+      '#description' => t('If disabled the entered settings will be kept, but the notice will no longer have the button to be removed.'),
+      '#default_value' => $enabled,
+    ];
+
+    $form['site_notice']['options'] = [
+      '#type' => 'container',
+      '#states' => [
+        'visible' => [
+          ':input[id="edit-sitenotice-enabled"]' => ['checked' => TRUE]
+        ]
+      ]
+    ];
+
+    $form['site_notice']['options']['sitenotice_cookie_type'] = [
+      '#type' => 'select',
+      '#title' => t('Cookie Expiration'),
+      '#description' => t('A session cookie lasts until the browser is closed, a cookie with an expiration set will last until that date.'),
+      '#default_value' => $cookie_type,
+      '#options' => [
+        'expiration_num_days' => t('Set Number of Days'),
+        'expiration_session' => t('End of Session')
+      ]
+    ];
+
+    $form['site_notice']['options']['sitenotice_num_days'] = [
+      '#type' => 'number',
+      '#title' => t('Days until expiration'),
+      '#description' => t('The number of days after the user closes a notice before they will see it again.'),
+      '#default_value' => $num_days,
+      '#states' => [
+        'visible' => [
+          ':input[id="edit-sitenotice-cookie-type"]' => ['value' => 'expiration_num_days']
+        ]
+      ]
+    ];
+
+    $form['#entity_builders'][] = 'rsn_block_content_edit_form_builder';
+  }
+}
+
+function rsn_block_content_type_edit_form_builder($entity_type, $entity, &$form, FormStateInterface $form_state) {
+  $entity->setThirdPartySetting('radicat_sitenotice', 'rsn_enabled', $form_state->getValue('site_notice'));
+}
+
+function rsn_block_content_edit_form_builder($entity_type, $entity, &$form, FormStateInterface $form_state) {
+
+
+  $entity->get('sitenotice_enabled')->setValue($form_state->getValue('sitenotice_enabled'));
+  $entity->get('sitenotice_cookie_type')->setValue($form_state->getValue('sitenotice_cookie_type'));
+  $entity->get('sitenotice_num_days')->setValue($form_state->getValue('sitenotice_num_days'));
+  $entity->save();
+}
+
+/**
+ * Implements hook_block_view_alter().
+ */
+function radicati_sitenotice_block_content_view_alter(array &$build, BlockContent $block) {
+  $enabled = $block->get('sitenotice_enabled');
+
+  if(!empty($enabled) && $enabled->getValue()[0]) {
+
+    $cookie_type = $block->get('sitenotice_cookie_type')->getValue()[0]['value'];
+    $num_days = $block->get('sitenotice_num_days')->getValue()[0]['value'];
+
+    if($cookie_type == 'expiration_num_days') {
+      $build['#attributes']['data-site-notice-num-days'] = $num_days;
+    }
+
+    // Add an id that will be used to generate a cookie key.
+    // Add a class so the JS knows this is a site notice.
+    $build['#attributes']['class'][] = 'site-notice__block';
+    $build['#attributes']['data-site-notice-id'] = $block->id();
+    $build['#attached']['library'][] = 'radicati_sitenotice/radicati_sitenotice';
+
+    // Add a close button
+    $build['sitenotice_close_wrapper'] = [
+      '#theme' => 'sitenotice_close'
+    ];
+  }
+}

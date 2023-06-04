@@ -1,0 +1,12 @@
+{
+    "name": "getrootid/radicati_sitenotice",
+    "description": "Allows site builders to create dismissable site notice blocks.",
+    "type": "module",
+    "authors": [
+        {
+            "name": "Jason Neumark Mickela",
+            "email": "jason@rootid.com"
+        }
+    ],
+    "require": {}
+}

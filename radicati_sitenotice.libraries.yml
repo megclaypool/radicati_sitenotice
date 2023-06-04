@@ -1,0 +1,10 @@
+radicati_sitenotice:
+  version: 1.x
+  css:
+    theme:
+      dist/css/radicati_sitenotice.css: {}
+  js:
+    dist/js/radicati_sitenotice.js: { minified: false }
+  dependencies:
+    - core/jquery
+    - core/jquery.once

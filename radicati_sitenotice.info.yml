@@ -1,0 +1,5 @@
+name: "Site Notice"
+type: module
+description: "Provides a block type that can work as a notification to users. Once the user dismisses it they won't see it again."
+core_version_requirement: ^8 || ^9
+package: "radicati"
