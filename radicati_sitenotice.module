@@ -179,11 +179,18 @@ function radicati_sitenotice_block_content_view_alter(array &$build, BlockConten
     // Add a class so the JS knows this is a site notice.
     $build['#attributes']['class'][] = 'site-notice__block';
     $build['#attributes']['data-site-notice-id'] = $block->id();
-    $build['#attached']['library'][] = 'radicati_sitenotice/radicati_sitenotice';
+
+    // You have to add the library to the close button build array because it
+    // wont get attached if you try to add it to the base $build array.
 
     // Add a close button
     $build['sitenotice_close_wrapper'] = [
-      '#theme' => 'sitenotice_close'
+      '#theme' => 'sitenotice_close',
+      '#attached' => [
+        'library' => [
+          'radicati_sitenotice/radicati_sitenotice'
+        ]
+      ]
     ];
   }
 }
