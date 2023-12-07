@@ -1,7 +1,7 @@
 {
     "name": "getrootid/radicati_sitenotice",
     "description": "Allows site builders to create dismissable site notice blocks.",
-    "type": "drupal-module-radicati",
+    "type": "drupal-module",
     "authors": [
         {
             "name": "Jason Neumark Mickela",
