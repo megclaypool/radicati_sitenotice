@@ -166,7 +166,7 @@ function rsn_block_content_edit_form_builder($entity_type, $entity, &$form, Form
 function radicati_sitenotice_block_content_view_alter(array &$build, BlockContent $block) {
   $enabled = $block->get('sitenotice_enabled');
 
-  if(!empty($enabled) && $enabled->getValue()[0]) {
+  if(!empty($enabled) && !empty($enabled->getValue()[0])) {
 
     $cookie_type = $block->get('sitenotice_cookie_type')->getValue()[0]['value'];
     $num_days = $block->get('sitenotice_num_days')->getValue()[0]['value'];
